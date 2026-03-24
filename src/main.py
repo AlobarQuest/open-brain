@@ -1,4 +1,5 @@
 import hmac
+import json
 from contextlib import asynccontextmanager
 
 import sqlalchemy
@@ -85,4 +86,9 @@ async def health():
             db_status = "connected"
         except Exception:
             db_status = "error"
-    return {"status": "ok", "app": settings.app_name, "db": db_status}
+    status_code = 200 if db_status == "connected" else 503
+    return Response(
+        content=json.dumps({"status": "ok" if db_status == "connected" else "degraded", "app": settings.app_name, "db": db_status}),
+        status_code=status_code,
+        media_type="application/json",
+    )
