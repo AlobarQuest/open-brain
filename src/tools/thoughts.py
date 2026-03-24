@@ -41,7 +41,7 @@ def register_thought_tools(mcp: FastMCP) -> None:
     async def search_thoughts(
         query: str,
         limit: int = 10,
-        threshold: float = 0.5,
+        threshold: float = 0.35,
     ) -> dict:
         """Search captured thoughts by meaning. Use this when the user asks about a topic, person, or idea they've previously captured."""
         query_embedding = await embed(query)

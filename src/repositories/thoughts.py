@@ -30,7 +30,7 @@ class ThoughtRepository:
     async def search(
         self,
         query_embedding: list[float],
-        threshold: float = 0.5,
+        threshold: float = 0.35,
         limit: int = 10,
     ) -> list[dict]:
         """Semantic search via the match_thoughts Postgres function."""
