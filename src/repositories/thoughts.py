@@ -37,7 +37,7 @@ class ThoughtRepository:
         result = await self.session.execute(
             text(
                 "SELECT id, content, metadata, similarity, created_at "
-                "FROM match_thoughts(:embedding::vector, :threshold, :limit, :filter)"
+                "FROM match_thoughts(CAST(:embedding AS vector), :threshold, :limit, CAST(:filter AS jsonb))"
             ),
             {
                 "embedding": str(query_embedding),
