@@ -1,0 +1,10 @@
+services:
+  api:
+    ports:
+      - "8000:80"
+    networks:
+      - default
+
+networks:
+  coolify:
+    external: false
