@@ -65,11 +65,8 @@ jobs:
 
       - name: Trigger Coolify redeploy
         run: |
-          curl --fail-with-body -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" || {
-              echo "ERROR: Coolify webhook failed (check COOLIFY_WEBHOOK_URL and COOLIFY_API_TOKEN secrets)"
-              exit 1
-            }
+          curl -f -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
 
       - name: Verify deployment health
         run: |
