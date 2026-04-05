@@ -1,0 +1,87 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE_NAME: ghcr.io/alobarquest/open-brain
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Validate compose files
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.local.yml config --quiet
+
+      - name: Run tests
+        env:
+          MCP_ACCESS_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          OPENROUTER_API_KEY: sk-test-dummy-key-for-ci
+        run: pytest -x -v
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trigger Coolify redeploy
+        run: |
+          curl -f --fail-with-body -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" || {
+              echo "ERROR: Coolify webhook failed (check COOLIFY_WEBHOOK_URL and COOLIFY_API_TOKEN secrets)"
+              exit 1
+            }
+
+      - name: Verify deployment health
+        run: |
+          echo "Waiting 30s for deployment to start..."
+          sleep 30
+          for i in 1 2 3 4 5; do
+            if curl -sf "https://open-brain.devonwatkins.com/api/health" > /dev/null 2>&1; then
+              echo "Health check passed on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i failed, waiting 15s..."
+            sleep 15
+          done
+          echo "WARNING: Health check did not pass after 5 attempts"
+          exit 1
