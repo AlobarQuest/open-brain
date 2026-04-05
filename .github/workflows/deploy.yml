@@ -64,9 +64,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Coolify redeploy
+        env:
+          WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
         run: |
-          curl -f -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
+          curl -f -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $API_TOKEN"
 
       - name: Verify deployment health
         run: |
