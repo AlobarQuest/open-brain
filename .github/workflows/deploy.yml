@@ -65,11 +65,12 @@ jobs:
 
       - name: Trigger Coolify redeploy
         env:
-          WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          DEPLOY_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
           API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
         run: |
-          curl -f -X POST "$WEBHOOK_URL" \
-            -H "Authorization: Bearer $API_TOKEN"
+          curl -f -X GET "${DEPLOY_URL}?uuid=${APP_UUID}&force=false" \
+            -H "Authorization: Bearer ${API_TOKEN}"
 
       - name: Verify deployment health
         run: |
