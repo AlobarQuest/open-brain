@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.db.engine import Base
-from src.db import models  # noqa: F401
+from src.db import models  # noqa: F401 — ensure models are registered with Base.metadata
 
 config = context.config
 
@@ -15,7 +15,14 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-database_url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+# Self-contained URL resolution — does not depend on src.config.Settings
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    fallback = config.get_main_option("sqlalchemy.url")
+    if fallback and fallback != "driver://user:pass@localhost/dbname":
+        database_url = fallback
+if not database_url:
+    raise RuntimeError("DATABASE_URL env var is required for migrations")
 
 
 def run_migrations_offline() -> None:

@@ -2,7 +2,7 @@ import json
 
 import httpx
 
-from src.config import settings
+from src.config import get_settings
 
 OPENROUTER_BASE = "https://openrouter.ai/api/v1"
 
@@ -20,7 +20,7 @@ async def _post_openrouter(path: str, payload: dict) -> dict:
         r = await client.post(
             f"{OPENROUTER_BASE}{path}",
             headers={
-                "Authorization": f"Bearer {settings.openrouter_api_key}",
+                "Authorization": f"Bearer {get_settings().openrouter_api_key}",
                 "Content-Type": "application/json",
             },
             json=payload,

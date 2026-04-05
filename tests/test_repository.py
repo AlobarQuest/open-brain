@@ -4,8 +4,8 @@ from src.repositories.thoughts import ThoughtRepository
 
 
 @pytest.mark.asyncio
-async def test_create_thought(session):
-    repo = ThoughtRepository(session)
+async def test_create_thought(db_session):
+    repo = ThoughtRepository(db_session)
     thought = await repo.create(
         content="Test thought about Python",
         embedding=[0.1] * 1536,
@@ -17,8 +17,8 @@ async def test_create_thought(session):
 
 
 @pytest.mark.asyncio
-async def test_list_thoughts(session):
-    repo = ThoughtRepository(session)
+async def test_list_thoughts(db_session):
+    repo = ThoughtRepository(db_session)
     await repo.create(
         content="First thought",
         embedding=[0.1] * 1536,
@@ -34,8 +34,8 @@ async def test_list_thoughts(session):
 
 
 @pytest.mark.asyncio
-async def test_list_thoughts_filter_by_type(session):
-    repo = ThoughtRepository(session)
+async def test_list_thoughts_filter_by_type(db_session):
+    repo = ThoughtRepository(db_session)
     await repo.create(
         content="An observation",
         embedding=[0.1] * 1536,
@@ -51,8 +51,8 @@ async def test_list_thoughts_filter_by_type(session):
 
 
 @pytest.mark.asyncio
-async def test_stats(session):
-    repo = ThoughtRepository(session)
+async def test_stats(db_session):
+    repo = ThoughtRepository(db_session)
     await repo.create(
         content="Stats test thought",
         embedding=[0.1] * 1536,

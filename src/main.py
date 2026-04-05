@@ -6,8 +6,8 @@ import sqlalchemy
 from fastapi import FastAPI, Request, Response
 from fastmcp import FastMCP
 
-from src.config import settings
-from src.db.engine import async_session_factory, engine
+from src.config import get_settings
+from src.db.engine import get_engine, get_session_factory
 from src.tools.thoughts import register_thought_tools
 
 mcp = FastMCP("open-brain", json_response=True, stateless_http=True)
@@ -20,7 +20,7 @@ mcp_asgi_app = mcp.http_app(path="/")
 async def lifespan(app: FastAPI):
     async with mcp_asgi_app.router.lifespan_context(mcp_asgi_app):
         yield
-    await engine.dispose()
+    await get_engine().dispose()
 
 
 app = FastAPI(title="Open Brain", lifespan=lifespan)
@@ -28,13 +28,11 @@ app = FastAPI(title="Open Brain", lifespan=lifespan)
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next) -> Response:
-    # Health endpoint is unauthenticated (Coolify probes)
     if request.url.path == "/api/health":
         return await call_next(request)
 
-    # Check x-brain-key header or ?key= query param
     provided = request.headers.get("x-brain-key") or request.query_params.get("key")
-    if not provided or not hmac.compare_digest(provided, settings.mcp_access_key):
+    if not provided or not hmac.compare_digest(provided, get_settings().mcp_access_key):
         return Response(
             content='{"error": "Invalid or missing access key"}',
             status_code=401,
@@ -80,7 +78,8 @@ app.add_route(
 
 @app.get("/api/health")
 async def health():
-    async with async_session_factory() as session:
+    settings = get_settings()
+    async with get_session_factory()() as session:
         try:
             await session.execute(sqlalchemy.text("SELECT 1"))
             db_status = "connected"

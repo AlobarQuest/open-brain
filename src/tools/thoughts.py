@@ -1,9 +1,8 @@
 import asyncio
-from typing import Optional
 
 from fastmcp import FastMCP
 
-from src.db.engine import async_session_factory
+from src.db.engine import get_session_factory
 from src.repositories.thoughts import ThoughtRepository
 from src.services.openrouter import embed, extract_metadata
 
@@ -19,7 +18,7 @@ def register_thought_tools(mcp: FastMCP) -> None:
         )
         metadata["source"] = "mcp"
 
-        async with async_session_factory() as session:
+        async with get_session_factory()() as session:
             repo = ThoughtRepository(session)
             await repo.create(
                 content=content,
@@ -44,9 +43,10 @@ def register_thought_tools(mcp: FastMCP) -> None:
         threshold: float = 0.35,
     ) -> dict:
         """Search captured thoughts by meaning. Use this when the user asks about a topic, person, or idea they've previously captured."""
+        limit = max(1, min(limit, 50))
         query_embedding = await embed(query)
 
-        async with async_session_factory() as session:
+        async with get_session_factory()() as session:
             repo = ThoughtRepository(session)
             results = await repo.search(
                 query_embedding=query_embedding,
@@ -79,13 +79,14 @@ def register_thought_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     async def list_thoughts(
         limit: int = 10,
-        type: Optional[str] = None,
-        topic: Optional[str] = None,
-        person: Optional[str] = None,
-        days: Optional[int] = None,
+        type: str | None = None,
+        topic: str | None = None,
+        person: str | None = None,
+        days: int | None = None,
     ) -> dict:
-        """List recently captured thoughts with optional filters by type, topic, person, or time range."""
-        async with async_session_factory() as session:
+        """List recently captured thoughts with optional filters by type, topic, person, or time range. Use this when the user wants to see recent captures or browse by category."""
+        limit = max(1, min(limit, 100))
+        async with get_session_factory()() as session:
             repo = ThoughtRepository(session)
             thoughts = await repo.list_thoughts(
                 limit=limit,
@@ -113,8 +114,8 @@ def register_thought_tools(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def thought_stats() -> dict:
-        """Get a summary of all captured thoughts: totals, types, top topics, and people."""
-        async with async_session_factory() as session:
+        """Get a summary of all captured thoughts: totals, types, top topics, and people. Use this for an overview of what's stored in the brain."""
+        async with get_session_factory()() as session:
             repo = ThoughtRepository(session)
             stats = await repo.stats()
 
