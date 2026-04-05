@@ -1,9 +1,13 @@
 services:
+  openbrain-db:
+    ports:
+      - "5434:5432"
+
   api:
     ports:
-      - "8000:80"
-    networks:
-      - default
+      - "8002:80"
+    environment:
+      APP_ENV: development
 
 networks:
   coolify:
